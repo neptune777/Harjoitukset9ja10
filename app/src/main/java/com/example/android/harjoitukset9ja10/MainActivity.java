@@ -5,6 +5,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.CursorIndexOutOfBoundsException;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.location.LocationListener;
@@ -19,6 +21,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -26,6 +30,7 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.example.android.harjoitukset9ja10.data.DatabaseContentAdapter;
 import com.example.android.harjoitukset9ja10.data.DatabaseContract;
 import com.example.android.harjoitukset9ja10.data.OmaSQLiteHelper;
 
@@ -49,8 +54,10 @@ public class MainActivity extends AppCompatActivity   implements
     private Button haePaikkaButton;
 
     private int seconds;
+    private RecyclerView mNumbersList;
     private SQLiteDatabase mDb;
     private OmaSQLiteHelper dbHelper;
+    private DatabaseContentAdapter mAdapter;
     private static final int SQLITE_SEARCH_LOADER = 22;
     private static final int SQLITE_INSERT_LOADER = 23;
     private static final int SQLITE_DELETE_LOADER = 24;
@@ -77,6 +84,11 @@ public class MainActivity extends AppCompatActivity   implements
         context=this;
         seconds=0;
 
+        mNumbersList = (RecyclerView) findViewById(R.id.recyclerView2);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        mNumbersList.setLayoutManager(layoutManager);
+        mNumbersList.setHasFixedSize(true);
+
 
         locationTextView = findViewById(R.id.textView);
         introTextView    = findViewById(R.id.textView2);
@@ -95,6 +107,7 @@ public class MainActivity extends AppCompatActivity   implements
 
         mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         android.support.v4.app.LoaderManager.getInstance(this).initLoader(SQLITE_SEARCH_LOADER, null, this).forceLoad();
+
         getLocationFromDatabase();
 
 
@@ -106,6 +119,13 @@ public class MainActivity extends AppCompatActivity   implements
             public void onLocationChanged(Location location) {
                 Log.d("lokapaikka", ("paikka on muuttunut "+location.getLatitude()+", "+location.getLongitude()));
 
+
+                if(isBetterLocation(mLocation,location)){
+                    deleteAllFromDatabase();
+                    addNewLocation(""+location.getLatitude(),""+location.getLongitude(),""+location.getAccuracy(),""+location.getProvider(),""+ location.getTime());
+
+
+                }
 
 
                 if(mLocation!=null && location.getAccuracy() != mLocation.getAccuracy()) {
@@ -124,7 +144,8 @@ public class MainActivity extends AppCompatActivity   implements
                     Log.d("Provider12", (""+location.getProvider()));
                 }
                // mLocation.getProvider();
-                addNewLocation(""+mLocation.getLatitude(),""+mLocation.getLongitude(),""+mLocation.getAccuracy(),""+mLocation.getProvider(),""+ mLocation.getTime());
+                deleteAllFromDatabase();
+                addNewLocation(""+location.getLatitude(),""+location.getLongitude(),""+location.getAccuracy(),""+location.getProvider(),""+ location.getTime());
             }
 
             @Override
@@ -154,7 +175,7 @@ public class MainActivity extends AppCompatActivity   implements
 
         Bundle queryBundle = new Bundle();
         queryBundle.putString(QUERY_EXTRA,"getLocation");
-
+        Log.d("getLocationFromDatabase", (""));
         LoaderManager loaderManager =  android.support.v4.app.LoaderManager.getInstance(this);
         Loader<Cursor> queryLoader = loaderManager.getLoader(SQLITE_SEARCH_LOADER);
 
@@ -162,6 +183,22 @@ public class MainActivity extends AppCompatActivity   implements
             loaderManager.initLoader(SQLITE_SEARCH_LOADER, queryBundle, this);
         } else {
             loaderManager.restartLoader(SQLITE_SEARCH_LOADER, queryBundle, this);
+        }
+
+    }
+
+    private void deleteAllFromDatabase(){
+
+        Bundle queryBundle = new Bundle();
+        queryBundle.putString(DELETE_EXTRA,"delete");
+        Log.d("deleteFromDatabase", "");
+        LoaderManager loaderManager =  android.support.v4.app.LoaderManager.getInstance(this);
+        Loader<Cursor> queryLoader = loaderManager.getLoader(SQLITE_DELETE_LOADER);
+
+        if (queryLoader == null) {
+            loaderManager.initLoader(SQLITE_DELETE_LOADER, queryBundle, this);
+        } else {
+            loaderManager.restartLoader(SQLITE_DELETE_LOADER, queryBundle, this);
         }
 
     }
@@ -260,25 +297,7 @@ public class MainActivity extends AppCompatActivity   implements
     }
 
 
-    @Override
-    public void onSaveInstanceState(Bundle outState, PersistableBundle persistableBundle) {
 
-            outState.putParcelable("location",  mLocation);
-
-            outState.putInt("kutsuja", seconds);
-
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        //locationTextView.setText("Accuracy " + savedInstanceState.getInt("accuracy"));
-        mLocation = savedInstanceState.getParcelable("accuracy");
-        int kutsuja = savedInstanceState.getInt("kutsuja");
-        //mRequests.setText("requestLocationUpdates-kutsuja " +  kutsuja );
-        seconds = kutsuja;
-        super.onRestoreInstanceState(savedInstanceState);
-    }
 
 
 
@@ -402,22 +421,47 @@ public class MainActivity extends AppCompatActivity   implements
         return null;
     }
 
+    public void open() throws SQLException {
+        mDb = dbHelper.getWritableDatabase();
+        getLocationFromDatabase();
+    }
+
+    public void close() {
+        dbHelper.close();
+    }
+
+    @Override
+    protected void onResume() {
+        open();
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        close();
+        super.onPause();
+    }
+
     @NonNull
     @Override
     public Loader<Cursor> onCreateLoader(int i, @Nullable final Bundle bundle) {
 
         return new AsyncTaskLoader<Cursor>(this) {
 
+            // Initialize a Cursor, this will hold all the task data
+            Cursor mTaskData = null;
+
             @Override
             public void onStartLoading(){
                 super.onStartLoading();
 
 
-                if(bundle==null){
-                    return;
+                if(mTaskData != null){
+                    deliverResult(mTaskData);
+                }else {
+                    mLoadingIndicator.setVisibility(View.VISIBLE);
+                    forceLoad();
                 }
-                mLoadingIndicator.setVisibility(View.VISIBLE);
-                forceLoad();
             }
 
 
@@ -425,21 +469,40 @@ public class MainActivity extends AppCompatActivity   implements
             @Override
             public Cursor loadInBackground() {
 
-                String QueryString = bundle.getString(QUERY_EXTRA);
-                String InsertLatitudeString = bundle.getString(INSERT_LATITUDE_EXTRA);
-                String InsertLongitudeString = bundle.getString(INSERT_LONGITUDE_EXTRA);
-                String InsertAccuracyString = bundle.getString(INSERT_ACCURACY_EXTRA);
-                String InsertProviderString = bundle.getString(INSERT_PROVIDER_EXTRA);
-                String InsertTimeString = bundle.getString(INSERT_TIME);
-                String DeleteString = bundle.getString(DELETE_EXTRA);
-                int DeleteByIdInt = bundle.getInt(DELETE_BY_ID_EXTRA);
-                String SortString = bundle.getString(SORT_EXTRA);
-                boolean isNull = SortString==null;
-                boolean isEmpty = TextUtils.isEmpty(SortString);
-                Log.d("isNull? ",""+isNull);
+                String QueryString="";
+                String InsertLatitudeString="";
+                String InsertLongitudeString="";
+                String InsertAccuracyString="";
+                String InsertProviderString="";
+                String InsertTimeString="";
+                String DeleteString="";
+                int DeleteByIdInt;
+                String SortString="";
+                boolean isNull;
+                boolean isEmpty;
+              /*  Log.d("isNull? ",""+isNull);
                 Log.d("isEmpty? ",""+isEmpty);
                 Log.d("SortString!! ",""+SortString);
+*/
+              try{
 
+                   QueryString = bundle.getString(QUERY_EXTRA);
+                   InsertLatitudeString = bundle.getString(INSERT_LATITUDE_EXTRA);
+                   InsertLongitudeString = bundle.getString(INSERT_LONGITUDE_EXTRA);
+                   InsertAccuracyString = bundle.getString(INSERT_ACCURACY_EXTRA);
+                   InsertProviderString = bundle.getString(INSERT_PROVIDER_EXTRA);
+                   InsertTimeString = bundle.getString(INSERT_TIME);
+                   DeleteString = bundle.getString(DELETE_EXTRA);
+                   DeleteByIdInt = bundle.getInt(DELETE_BY_ID_EXTRA);
+                   SortString = bundle.getString(SORT_EXTRA);
+                   isNull = SortString==null;
+                   isEmpty = TextUtils.isEmpty(SortString);
+
+
+
+              }catch(NullPointerException e){
+
+              }
 
 
 
@@ -490,7 +553,7 @@ public class MainActivity extends AppCompatActivity   implements
                         mDb.delete(DatabaseContract.DatabaseEntry.TABLE_LOCATIONS, null, null);
 
 
-                        return null;
+                        return cursor(DatabaseContract.DatabaseEntry._ID);
 
                     }catch(NullPointerException e){
                         e.printStackTrace();
@@ -512,30 +575,21 @@ public class MainActivity extends AppCompatActivity   implements
             }
 
             // deliverResult sends the result of the load, a Cursor, to the registered listener
-            public void deliverResult(Cursor cursor) {
-               // mTaskData = data;
+            public void deliverResult(Cursor data) {
+               mTaskData = data;
 
-                String longi = cursor.getString(cursor.getColumnIndex(DatabaseContract.DatabaseEntry.COLUMN_LONGITUDE));
-                String lati = cursor.getString(cursor.getColumnIndex(DatabaseContract.DatabaseEntry.COLUMN_LATITUDE));
-                String accuracy = cursor.getString(cursor.getColumnIndex(DatabaseContract.DatabaseEntry.COLUMN_ACCURACY));
-                String provider = cursor.getString(cursor.getColumnIndex(DatabaseContract.DatabaseEntry.COLUMN_PROVIDER));
-                String time = cursor.getString(cursor.getColumnIndex(DatabaseContract.DatabaseEntry.COLUMN_TIME));
-
-                Location location = new Location(""+provider);
-                location.setLatitude(Double.parseDouble(lati));
-                location.setLongitude(Double.parseDouble(longi));
-                location.setAccuracy(Float.parseFloat(accuracy));
-                location.setTime(Long.parseLong(time));
-
-                mLocation=location;
-
-                super.deliverResult(cursor);
+                super.deliverResult(data);
             }
 
         };
     }
     @Override
     public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor cursor) {
+
+
+        mAdapter = new DatabaseContentAdapter(this, cursor, mLocation);
+        mNumbersList.setAdapter(mAdapter);
+        mLoadingIndicator.setVisibility(View.INVISIBLE);
 
     }
 

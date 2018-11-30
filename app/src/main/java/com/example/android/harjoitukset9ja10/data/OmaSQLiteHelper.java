@@ -16,19 +16,16 @@ import android.util.Log;
 public class OmaSQLiteHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "lokaatiot.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 3;
 
     // Database creation sql statement
     private static final String DATABASE_CREATE = "create table "
             + DatabaseContract.DatabaseEntry.TABLE_LOCATIONS + "( " + DatabaseContract.DatabaseEntry._ID
-            + " integer primary key autoincrement, " +
-            DatabaseContract.DatabaseEntry.COLUMN_LATITUDE
+            + " integer primary key autoincrement, " + DatabaseContract.DatabaseEntry.COLUMN_LATITUDE
             + " text not null, "+ DatabaseContract.DatabaseEntry.COLUMN_LONGITUDE
-            + " text not null,"+
-            DatabaseContract.DatabaseEntry.COLUMN_ACCURACY
-            + DatabaseContract.DatabaseEntry.COLUMN_PROVIDER
-            + " text not null,"
-            + " text not null, "+ DatabaseContract.DatabaseEntry.COLUMN_TIME
+            + " text not null,"+  DatabaseContract.DatabaseEntry.COLUMN_ACCURACY
+            + " text not null,"+ DatabaseContract.DatabaseEntry.COLUMN_PROVIDER
+            + " text not null,"+ DatabaseContract.DatabaseEntry.COLUMN_TIME
             + " text not null);";
 
     public OmaSQLiteHelper(Context context){
