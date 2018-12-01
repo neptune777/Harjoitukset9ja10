@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">Harjoitukset 9 ja 10</string>
-    <string name="app_intro">Tämän tekstin alle päivittyy sijainti x minuutin välein</string>
+    <string name="accuracyTextView">Tämän tekstin tilalle päivittyy paikannuksen tarkkuus</string>
+    <string name="lokaatioTextView">Tämän tekstin tilalle päivittyy sijainti</string>
+    <string name="timeTextView">Tämän tekstin tilalle päivittyy paikannusaika</string>
+    <string name="button">Aloita</string>
+    <string name="button2">Lopeta</string>
 </resources>
