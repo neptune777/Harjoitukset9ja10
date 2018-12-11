@@ -4,6 +4,7 @@
     <string name="lokaatioTextView">Tämän tekstin tilalle päivittyy sijainti</string>
     <string name="lokaatioTypeTextView">Tämän tekstin tilalle päivittyy paikannustapa</string>
     <string name="timeTextView">Tämän tekstin tilalle päivittyy paikannusaika</string>
+    <string name="showOnMap">Näytä kartalla</string>
     <string name="button">Aloita</string>
     <string name="button2">Lopeta</string>
     <string name="title_activity_maps">Map</string>

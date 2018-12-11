@@ -2,6 +2,7 @@ package com.example.android.harjoitukset9ja10;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -36,6 +37,7 @@ public class MainActivity extends AppCompatActivity{
     private Context context;
     private Button haePaikkaButton;
     private Button lopetaButton;
+    private Button showOnMapButton;
 
     private boolean onOff;
 
@@ -51,12 +53,16 @@ public class MainActivity extends AppCompatActivity{
         context=this;
 
 
+
+
         locationTextView        = findViewById(R.id.textView);
         accuracyTextView        = findViewById(R.id.textView2);
         timeTextView            = findViewById(R.id.textView3);
         locationTypeTextView    = findViewById(R.id.textView4);
         haePaikkaButton         = findViewById(R.id.button);
         lopetaButton            = findViewById(R.id.button2);
+        showOnMapButton         = findViewById(R.id.button4);
+        showOnMapButton.setVisibility(View.INVISIBLE);
 
         haePaikkaButton.setOnClickListener(new View.OnClickListener()
         {
@@ -82,6 +88,15 @@ public class MainActivity extends AppCompatActivity{
             }
         });
 
+        showOnMapButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                naytaKartalla();
+            }
+        });
+
         if (savedInstanceState != null && savedInstanceState.getParcelable(LOCATION_EXTRA)!=null) {
             mLocation = savedInstanceState.getParcelable(LOCATION_EXTRA);
             onOff = savedInstanceState.getBoolean(ONOFF_EXTRA);
@@ -93,10 +108,33 @@ public class MainActivity extends AppCompatActivity{
             String formattedTime = format.format(date);
             timeTextView.setText("Paikannusaika: " + formattedTime);
             locationTypeTextView.setText("Paikannustyyppi: " + mLocation.getProvider());
+            showOnMapButton.setVisibility(View.VISIBLE);
 
          }else if(savedInstanceState != null){
             Log.d("JEE ","" + onOff);
             onOff = savedInstanceState.getBoolean(ONOFF_EXTRA);
+            showOnMapButton.setVisibility(View.INVISIBLE);
+        }
+
+        Intent intentThatStartedThisActivity = getIntent();
+
+        if(intentThatStartedThisActivity.hasExtra(Intent.EXTRA_TEXT)){
+
+            //mLocation =  intentThatStartedThisActivity.getParcelableExtra(Intent.EXTRA_TEXT);
+
+            mLocation =  intentThatStartedThisActivity.getParcelableExtra(Intent.EXTRA_TEXT);
+            Log.d("MainActivity","Prööt! " + mLocation.getLongitude());
+           // onOff = savedInstanceState.getBoolean(ONOFF_EXTRA);
+            Log.d("JEE ","" + onOff);
+            locationTextView.setText("Latitudi: " + mLocation.getLatitude() + ", Longitudi: " + mLocation.getLongitude());
+            accuracyTextView.setText("Paikannuksen tarkkuus: " + mLocation.getAccuracy());
+            DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            Date date = new Date(mLocation.getTime());
+            String formattedTime = format.format(date);
+            timeTextView.setText("Paikannusaika: " + formattedTime);
+            locationTypeTextView.setText("Paikannustyyppi: " + mLocation.getProvider());
+            showOnMapButton.setVisibility(View.VISIBLE);
+
         }
 
         mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -117,6 +155,7 @@ public class MainActivity extends AppCompatActivity{
                     String formattedTime = format.format(date);
                     timeTextView.setText("Paikannusaika: " + formattedTime);
                     locationTypeTextView.setText("Paikannustyyppi: " + mLocation.getProvider());
+                    showOnMapButton.setVisibility(View.VISIBLE);
 
 
                 }
@@ -172,7 +211,7 @@ public class MainActivity extends AppCompatActivity{
                    //Huonossa paikassa hidas haku
                    mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mLocationListener);
                    //Ottaa verkon paikan, joten yleensä nopea tapa hakea joku sijainti
-                   //mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, mLocationListener);
+                   mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, mLocationListener);
 
 
 
@@ -182,9 +221,11 @@ public class MainActivity extends AppCompatActivity{
 
                        locationTextView.setText("Latitudi: " + mLocation.getLatitude() + ", Longitudi: " + mLocation.getLongitude());
                        accuracyTextView.setText("Paikannuksen tarkkuus: " + mLocation.getAccuracy());
+                       showOnMapButton.setVisibility(View.VISIBLE);
 
                    }else{
                        locationTextView.setText("Paikannus aloitettu, mutta paikkatiedot eivät vielä valmiita... odota, ole hyvä");
+                       showOnMapButton.setVisibility(View.INVISIBLE);
                    }
                }catch (SecurityException e){
                    Log.d("lokasofta", "Virhe: Sovelluksella ei ollut oikeuksia lokaatioon");
@@ -340,6 +381,33 @@ public class MainActivity extends AppCompatActivity{
         }
         return provider1.equals(provider2);
 
+
+    }
+
+
+    public void naytaKartalla(){
+
+        Context context = MainActivity.this;
+
+        /* This is the class that we want to start (and open) when the button is clicked. */
+        Class destinationActivity = MapsActivity.class;
+
+        /*
+         * Here, we create the Intent that will start the Activity we specified above in
+         * the destinationActivity variable. The constructor for an Intent also requires a
+         * context, which we stored in the variable named "context".
+         */
+        Intent startChildActivityIntent = new Intent(context, destinationActivity);
+
+
+
+        startChildActivityIntent.putExtra(Intent.EXTRA_TEXT,mLocation);
+        startChildActivityIntent.putExtra(Intent.EXTRA_COMPONENT_NAME,onOff);
+        /*
+         * Once the Intent has been created, we can use Activity's method, "startActivity"
+         * to start the ChildActivity.
+         */
+        startActivity(startChildActivityIntent);
 
     }
 
