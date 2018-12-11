@@ -2,7 +2,9 @@
     <string name="app_name">Harjoitukset 9 ja 10</string>
     <string name="accuracyTextView">Tämän tekstin tilalle päivittyy paikannuksen tarkkuus</string>
     <string name="lokaatioTextView">Tämän tekstin tilalle päivittyy sijainti</string>
+    <string name="lokaatioTypeTextView">Tämän tekstin tilalle päivittyy paikannustapa</string>
     <string name="timeTextView">Tämän tekstin tilalle päivittyy paikannusaika</string>
     <string name="button">Aloita</string>
     <string name="button2">Lopeta</string>
+    <string name="title_activity_maps">Map</string>
 </resources>

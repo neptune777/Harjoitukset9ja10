@@ -11,6 +11,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity{
     private TextView locationTextView;
     private TextView accuracyTextView;
     private TextView timeTextView;
+    private TextView locationTypeTextView;
 
     private static final int TWO_MINUTES = 1000 * 60 * 2;
     private Context context;
@@ -49,11 +51,12 @@ public class MainActivity extends AppCompatActivity{
         context=this;
 
 
-        locationTextView    = findViewById(R.id.textView);
-        accuracyTextView    = findViewById(R.id.textView2);
-        timeTextView        = findViewById(R.id.textView3);
-        haePaikkaButton     = findViewById(R.id.button);
-        lopetaButton        = findViewById(R.id.button2);
+        locationTextView        = findViewById(R.id.textView);
+        accuracyTextView        = findViewById(R.id.textView2);
+        timeTextView            = findViewById(R.id.textView3);
+        locationTypeTextView    = findViewById(R.id.textView4);
+        haePaikkaButton         = findViewById(R.id.button);
+        lopetaButton            = findViewById(R.id.button2);
 
         haePaikkaButton.setOnClickListener(new View.OnClickListener()
         {
@@ -79,16 +82,22 @@ public class MainActivity extends AppCompatActivity{
             }
         });
 
-        if (savedInstanceState != null) {
+        if (savedInstanceState != null && savedInstanceState.getParcelable(LOCATION_EXTRA)!=null) {
             mLocation = savedInstanceState.getParcelable(LOCATION_EXTRA);
             onOff = savedInstanceState.getBoolean(ONOFF_EXTRA);
+            Log.d("JEE ","" + onOff);
             locationTextView.setText("Latitudi: " + mLocation.getLatitude() + ", Longitudi: " + mLocation.getLongitude());
             accuracyTextView.setText("Paikannuksen tarkkuus: " + mLocation.getAccuracy());
             DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
             Date date = new Date(mLocation.getTime());
             String formattedTime = format.format(date);
             timeTextView.setText("Paikannusaika: " + formattedTime);
-           }
+            locationTypeTextView.setText("Paikannustyyppi: " + mLocation.getProvider());
+
+         }else if(savedInstanceState != null){
+            Log.d("JEE ","" + onOff);
+            onOff = savedInstanceState.getBoolean(ONOFF_EXTRA);
+        }
 
         mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
@@ -107,6 +116,7 @@ public class MainActivity extends AppCompatActivity{
                     Date date = new Date(mLocation.getTime());
                     String formattedTime = format.format(date);
                     timeTextView.setText("Paikannusaika: " + formattedTime);
+                    locationTypeTextView.setText("Paikannustyyppi: " + mLocation.getProvider());
 
 
                 }
@@ -138,6 +148,7 @@ public class MainActivity extends AppCompatActivity{
 
             haePaikkaButton.setVisibility(View.VISIBLE);
             lopetaButton.setVisibility(View.INVISIBLE);
+            lopeta();
 
         }
 
@@ -161,7 +172,7 @@ public class MainActivity extends AppCompatActivity{
                    //Huonossa paikassa hidas haku
                    mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mLocationListener);
                    //Ottaa verkon paikan, joten yleensä nopea tapa hakea joku sijainti
-                   mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, mLocationListener);
+                   //mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, mLocationListener);
 
 
 
@@ -173,7 +184,7 @@ public class MainActivity extends AppCompatActivity{
                        accuracyTextView.setText("Paikannuksen tarkkuus: " + mLocation.getAccuracy());
 
                    }else{
-                       locationTextView.setText("Paikkatiedot eivät vielä valmiita... odota, ole hyvä");
+                       locationTextView.setText("Paikannus aloitettu, mutta paikkatiedot eivät vielä valmiita... odota, ole hyvä");
                    }
                }catch (SecurityException e){
                    Log.d("lokasofta", "Virhe: Sovelluksella ei ollut oikeuksia lokaatioon");
@@ -224,7 +235,25 @@ public class MainActivity extends AppCompatActivity{
     }
 
 
+    @Override
+    protected void onRestoreInstanceState (Bundle savedInstanceState) {
+        if (savedInstanceState != null && savedInstanceState.getParcelable(LOCATION_EXTRA)!=null) {
+            mLocation = savedInstanceState.getParcelable(LOCATION_EXTRA);
+            onOff = savedInstanceState.getBoolean(ONOFF_EXTRA);
+            Log.d("JEE ","" + onOff);
+            locationTextView.setText("Latitudi: " + mLocation.getLatitude() + ", Longitudi: " + mLocation.getLongitude());
+            accuracyTextView.setText("Paikannuksen tarkkuus: " + mLocation.getAccuracy());
+            DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            Date date = new Date(mLocation.getTime());
+            String formattedTime = format.format(date);
+            timeTextView.setText("Paikannusaika: " + formattedTime);
+            locationTypeTextView.setText("Paikannustyyppi: " + mLocation.getProvider());
 
+        }else if(savedInstanceState != null){
+            Log.d("JEE ","" + onOff);
+            onOff = savedInstanceState.getBoolean(ONOFF_EXTRA);
+        }
+    }
 
 
 
@@ -323,8 +352,10 @@ public class MainActivity extends AppCompatActivity{
         super.onSaveInstanceState(outState);
         if(mLocation!=null) {
           outState.putParcelable(LOCATION_EXTRA, mLocation);
+          outState.putBoolean(ONOFF_EXTRA,onOff);
+        }else {
+            outState.putBoolean(ONOFF_EXTRA, onOff);
         }
-        outState.putBoolean(ONOFF_EXTRA,onOff);
 
     }
 
