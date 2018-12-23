@@ -44,4 +44,9 @@
 
     </application>
 
+<!--
+   <uses-feature
+       android:name="android.hardware.type.watch"
+       />
+-->
 </manifest>

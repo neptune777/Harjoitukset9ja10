@@ -6,7 +6,7 @@
     <dimen name="calcElementHeight">35dp</dimen>
     <dimen name="actionButtonHeight">35dp</dimen>
     <dimen name="actionButtonVerticalMargin">4dp</dimen>
-    <dimen name="textViewVerticalMargin">8dp</dimen>
+    <dimen name="textViewVerticalMargin">0dp</dimen>
     <dimen name="notCalcButtonFontSize">14sp</dimen>
     <dimen name="actionButtonFontSize">8sp</dimen>
     <dimen name="textViewHorizontalMargin">8dp</dimen>
