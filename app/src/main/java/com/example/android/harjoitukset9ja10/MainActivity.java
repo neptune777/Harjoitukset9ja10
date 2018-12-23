@@ -310,6 +310,7 @@ public class MainActivity extends AppCompatActivity{
                     Log.d("lokasofta", "lupa tuli!");
                     // permission was granted, yay! Do the
                     // location-related task you need to do.
+                    aloita();
                     if (ContextCompat.checkSelfPermission(this,
                             Manifest.permission.ACCESS_FINE_LOCATION)
                             == PackageManager.PERMISSION_GRANTED) {
