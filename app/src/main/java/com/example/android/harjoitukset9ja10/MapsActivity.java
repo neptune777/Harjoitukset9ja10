@@ -88,7 +88,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         switch (item.getItemId()) {
             case android.R.id.home:
                 mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                mainIntent.putExtra(Intent.EXTRA_TEXT,mLocation);
                 startActivity(mainIntent);
                 return true;
             default:

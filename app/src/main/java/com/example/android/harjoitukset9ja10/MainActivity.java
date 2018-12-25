@@ -116,26 +116,7 @@ public class MainActivity extends AppCompatActivity{
             showOnMapButton.setVisibility(View.INVISIBLE);
         }
 
-        Intent intentThatStartedThisActivity = getIntent();
 
-        if(intentThatStartedThisActivity.hasExtra(Intent.EXTRA_TEXT)){
-
-            //mLocation =  intentThatStartedThisActivity.getParcelableExtra(Intent.EXTRA_TEXT);
-
-            mLocation =  intentThatStartedThisActivity.getParcelableExtra(Intent.EXTRA_TEXT);
-            Log.d("MainActivity","Prööt! " + mLocation.getLongitude());
-           // onOff = savedInstanceState.getBoolean(ONOFF_EXTRA);
-            Log.d("JEE ","" + onOff);
-            locationTextView.setText("Latitudi: " + mLocation.getLatitude() + ", Longitudi: " + mLocation.getLongitude());
-            accuracyTextView.setText("Paikannuksen tarkkuus: " + mLocation.getAccuracy());
-            DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-            Date date = new Date(mLocation.getTime());
-            String formattedTime = format.format(date);
-            timeTextView.setText("Paikannusaika: " + formattedTime);
-            locationTypeTextView.setText("Paikannustyyppi: " + mLocation.getProvider());
-            showOnMapButton.setVisibility(View.VISIBLE);
-
-        }
 
         mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
